@@ -1,0 +1,22 @@
+{
+  "name": "jsreactorkit",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://jiwoo-choi@github.com/jiwoo-choi/JSReactorKit.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jiwoo-choi/JSReactorKit/issues"
+  },
+  "homepage": "https://github.com/jiwoo-choi/JSReactorKit#readme",
+  "dependencies": {
+    "rxjs": "^6.6.0"
+  }
+}

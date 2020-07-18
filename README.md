@@ -188,6 +188,9 @@ it('INCREASE ACTION PROPAGATION TESTING', ()=> {
 - [ ] 문서작성.
 - [ ] 코드 테스트.
 
+### 업데이트내역.
+- disposeBag 추가
+- ReactorView Interface
 
 ### Dependency
 - Rxjs 

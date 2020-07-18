@@ -8,22 +8,20 @@ export class Stub<SAction, SState, SMutate> {
     public actions : SAction[] = [];
     
     constructor(reactor: Reactor<SAction, SState, SMutate>) {
-
         this.state = new BehaviorSubject<SState>(reactor.initialState);
         this.action = new Subject<SAction>();
-
-        const stateSubscription = this.state.asObservable()
+        
+        reactor.disposedBy = this.state.asObservable()
         .subscribe(
             state=> { 
-                reactor.currentState =  state
+                reactor.currentState = state
             }
         )
 
-        const actionSubscription = this.action.subscribe(
+        reactor.disposedBy = this.action.subscribe(
             action=>{
                 this.actions.push(action)
             }
         )
-    
     }
 }

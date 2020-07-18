@@ -17,6 +17,8 @@
   },
   "homepage": "https://github.com/jiwoo-choi/JSReactorKit#readme",
   "dependencies": {
+    "@types/lodash": "^4.14.157",
+    "lodash": "^4.17.19",
     "rxjs": "^6.6.0"
   }
 }

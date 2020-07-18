@@ -1,4 +1,4 @@
-# JSReactorKit
+# JS - ReactorKit
 
 Inspired by [ReactorKit](https://github.com/ReactorKit/ReactorKit)
 

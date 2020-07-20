@@ -26,7 +26,6 @@ P = {},
         _reactor?: R;
 
         set reactor(newR : R) {       
-            console.log("omg1")     
             this._reactor = newR;
             this.disposeBag?.unsubscribe();
             let a = this.childRef as ReactorView<R> 
@@ -34,20 +33,16 @@ P = {},
         }  
 
         componentDidMount(){
-            console.log("mounted")
             let view = this.childRef as ReactorView<R> 
             this._reactor = view.reactor;
             if (this._reactor) {
                 this.disposeBag = view.bind(this._reactor);
             } else {
-                console.log("cannot bind")
-                console.log(Object.getPrototypeOf(this).displayName)
                 alert('np!');
             }
         }
 
         componentWillUnmount(){
-            console.log("unmount omg")
             if(this.disposeBag) {
                 this.disposeBag.unsubscribe();
             }

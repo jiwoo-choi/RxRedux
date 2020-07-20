@@ -10,6 +10,7 @@ export class Stub<SAction, SState, SMutate> {
     constructor(reactor: Reactor<SAction, SState, SMutate>) {
         this.state = new BehaviorSubject<SState>(reactor.initialState);
         this.action = new Subject<SAction>();
+
         
         reactor.disposedBy = this.state.asObservable()
         .subscribe(
@@ -23,5 +24,6 @@ export class Stub<SAction, SState, SMutate> {
                 this.actions.push(action)
             }
         )
+
     }
 }

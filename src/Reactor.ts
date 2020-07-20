@@ -5,7 +5,7 @@ import { DisposeBag } from './DisposeBag';
 
 export abstract class Reactor<Action = {}, State = {}, Mutation = Action> {
 
-
+    private _isGlobal: boolean;
     private dummyAction: Subject<any>;
     public action : Subject<Action>;
     private _initialState! : State; // only set once, then read-only. 
@@ -13,8 +13,10 @@ export abstract class Reactor<Action = {}, State = {}, Mutation = Action> {
     private _state!: Observable<State>; // nobody cannot change state except this.
     private _stub?: Stub<Action,State,Mutation>; 
     protected scheduler : Scheduler = queueScheduler; //only subclass can change scheduler.
-    private _disposeBag : DisposeBag = new DisposeBag(); //  
-    
+    private _disposeBag : DisposeBag = new DisposeBag(); //only 
+
+    // private actionWeakMap = new WeakMap();
+
     get initialState() {
         return this._initialState;
     }
@@ -27,8 +29,15 @@ export abstract class Reactor<Action = {}, State = {}, Mutation = Action> {
         return this._stub;
     }
 
-    constructor(initialState : State, isStubEnabled : boolean = false){
+    get isGlobal() {
+        return this._isGlobal;
+    }
 
+    constructor(initialState : State, isStubEnabled : boolean = false, isGlobal : boolean = false){
+        
+        //고유키값생성.
+        
+        this._isGlobal = isGlobal
         this.dummyAction = new Subject<any>(); 
 
         this._initialState = initialState;
@@ -42,6 +51,15 @@ export abstract class Reactor<Action = {}, State = {}, Mutation = Action> {
             this._state = this.createStream();
         }
     }
+
+    // static get reactorName(){
+    //     return this.constructor.name
+    // }
+
+    get name(){
+        return this.constructor.name
+    }
+
 
     abstract mutate(action : Action): Observable<Mutation>;
     abstract reduce(state: State, mutation: Mutation): State;
@@ -62,21 +80,28 @@ export abstract class Reactor<Action = {}, State = {}, Mutation = Action> {
     disposeOperator(){
         return takeUntil(this.dummyAction)
     }
-    
+
     disposeAll2() {
         this.dummyAction.next();
         this.dummyAction.complete();
     }
 
-    /// dispose using disposeBag.
     disposeAll(){
-        this.disposeBag.unsubscribe();
+        if (this.isGlobal) {
+            console.warn("This Reactor is not supposed to disposed. Please check your codes again.")
+        } else {
+            this.disposeBag.unsubscribe();
+        }
     }
     
-    /// add dispose bag.
     set disposedBy(subscription: Subscription | undefined) {
         if (subscription) {
-            this.disposeBag.add(subscription)
+
+            if (this.isGlobal) {
+                console.warn("This Reactor is not supposed to disposed bag. Please check your codes again.")
+            } else {
+                this.disposeBag.add(subscription)
+            }
         } else {
             return;
         }

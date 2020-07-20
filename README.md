@@ -310,6 +310,7 @@ it('INCREASE ACTION PROPAGATION TESTING', ()=> {
 - [X] 문서작성.
 - [X] 뷰 .
 - [ ] 코드 테스트.
+- [ ] 디버깅 기능 추가.
 
 ### 업데이트내역.
 - disposeBag 추가

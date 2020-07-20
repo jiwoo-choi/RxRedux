@@ -6,7 +6,6 @@ Inspired by [ReactorKit](https://github.com/ReactorKit/ReactorKit)
 
 `Mobx` & `Mobx-react`나 `Redux`같은 State 관리 라이브러리보다 소규모로 시작할 수 있고, 테스트코드를 보다 빠르게 작성할 수 있을것이라는 기대하에 사용 및 테스트중입니다.
 
-
 ## Example
 ### Action 및 State정의
 ```
@@ -116,6 +115,129 @@ viewAction? : Subject<ActionType>;
 }
 ```
 
+## 리액트 뷰 연결하는 방법.
+`ReactiveView`라는 Wrapper를 지원합니다. (Class - Component만 지원)
+
+`ReactiveView`의 역할은 `disposeBag`으로 `Subscrpition`을 관리해주고, 컴포넌트가 마운트되면 `bind()`를 수행시켜줍니다.
+
+`ReactiveView`는 `ReactorView`라는 인터페이스를 구현한 뷰에만 정상작동됩니다.
+
+### 예제
+```
+class TestView extends React.Component<{}, ModalState> implements ReactorView<ModalReactor> {
+
+    reactor?: ModalReactor;
+    
+    constructor(props:{}) {
+        super(props)
+
+        this.state = {
+            isOpened:false
+        }
+        
+        this.reactor = new ModalReactor(this.state);
+    }
+
+    bind(reactor: ModalReactor): DisposeBag {
+        let disposeBag = new DisposeBag();
+        disposeBag.disposeOf = reactor.state.pipe(map( res => res.isOpened), finalize( ()=> console.log('unsubscribed'))).subscribe(isOpened => this.setState({isOpened}))
+        return disposeBag;
+    }
+    
+    render(){
+        return(<div>
+            <Button onClick={()=>{this.reactor?.action.next({type:"MODALTOGGLE"})}}>A</Button>
+            {(this.state.isOpened)? "A": "B"}
+        </div>)
+    }
+}
+```
+테스트뷰를 `ReactiveView`로 감싸 Export합니다.
+```
+export default ReactiveView(TestView)
+```
+
+## Global Store
+
+JS 리액터킷 React의 Context API를 활용해 글로벌 스토어를 지원합니다.
+
+### 1. Store 등록
+
+글로벌 스토어로 사용할것을 앱의 최상단 루트에서 `register`함수를 이용해 등록합니다.
+
+```
+const value = register([new ModalReactor({isOpened: false},false,true)])
+```
+
+### 2. Provider
+앱의 최상단에서 `GlobalReactor.Provider`로 감싸줍니다.
+```
+App.tsx //최상단
+
+const value = register([new ModalReactor({isOpened: false},false,true)])
+
+render(){
+    return (
+        <GlobalReactor.Provider value={value}>
+            ....
+            .....
+        </GlobalReactor.Provider>
+    )
+}
+```
+
+### 3. State 바꾸기 / 구독하기.
+
+### 3-1. Export using Wrapper.
+
+마찬가지로 전용 뷰 Wrapper인 `Global`이라는 함수를 지원합니다.
+
+`Global`에서는 Reactor의 이름으로 글로벌 리액터중에서 원하는 리액터를 선택해야합니다. 
+
+```
+export default Global(SomeView, ModalReactor.name)
+```
+
+### 3-2. "SomeView" 구현하기.
+
+위의 SomeView예시처럼 `Global(SomeView, ...)`에 내가 작업하던 뷰를 담으려면, 몇가지 규칙이 있습니다.
+
+1. 기존 관리하던 로컬 `State`와 차별점을 두기위해서 글로벌 상태는 `Props`로 받을 수 있습니다.
+
+2. 지금 작성하고 있는 뷰에서 받고싶은 `State`와 `Reactor`의 타입을 인터페이스 `GlobalReactorProps<T,K>` 를 통해 명시하고, Props로 받는다고 선언합니다.
+
+### 예제 - state받기
+```
+class TestViewGlobalGetState extends React.Component<GlobalReactorProps<ModalReactor,ModalState>>{
+    render(){
+        return(
+            <Button>
+                {this.props.globalState.isOpened? "OPENED" : "UNOPENED"}
+            </Button>
+        )
+    }
+}
+```
+### 예제 - state바꾸기
+```
+class TestViewGlobalChangeState extends React.Component<GlobalReactorProps<ModalReactor,ModalState>>{
+    
+    render(){
+        return(
+            <Button onClick={()=>{this.props.globalRactor.action.next({type:"MODALTOGGLE"})}}>
+                바꾸는버튼
+            </Button>
+        )
+    }
+}
+```
+
+### 예제 - export
+```
+export const GLOBALTEST = Global(TestViewGlobalGetState, ModalReactor.name)
+export const GLOBALTEST2 = Global(TestViewGlobalChangeState, ModalReactor.name)
+```
+
 
 ## 테스트방법 (using Jest & Enzyme)
 
@@ -185,7 +307,8 @@ it('INCREASE ACTION PROPAGATION TESTING', ()=> {
 - [X] 비동기 처리 에러.
 - [X] 프로젝트 테스트 코드 추가 및 테스트.
 - [X] 테스트 기능.
-- [ ] 문서작성.
+- [X] 문서작성.
+- [X] 뷰 .
 - [ ] 코드 테스트.
 
 ### 업데이트내역.

@@ -2,169 +2,144 @@
 
 Inspired by [ReactorKit](https://github.com/ReactorKit/ReactorKit)
 
-`React` 웹 개발시에 뷰와 `State`를 변경하는 로직을 구분하고, 테스트를 보다 쉽게 진행하기 위해 `ReactorKit`을 본따 만들었습니다.
+`React` 웹 개발시에 뷰와 `State`를 변경하는 로직을 구분하고, 테스트를 보다 직관적으로 진행하기 위해 `ReactorKit`을 본따 만들었습니다. 타입스크립트 전용입니다.
 
-`Mobx` & `Mobx-react`나 `Redux`같은 State 관리 라이브러리보다 소규모로 시작할 수 있고, 테스트코드를 보다 빠르게 작성할 수 있을것이라는 기대하에 사용 및 테스트중입니다.
+## Concept
+`View call(Action) -> Reactor[Action-> Mutation -> State] -> View update(State)`
 
-## Example
-### Action 및 State정의
+- Action : 뷰의 행동입니다. 순수하게 뷰의 행동만을 추상화 합니다.  Mutate에게 변할 내용에 대한 힌트를 줍니다.
+- State: 뷰의 상태 입니다. 뷰의 결과 상태를 추상화합니다.
+- Mutation : 액션의 행동으로 변하게 되는 뷰의 상태에 대한 정의를 하는 부분입니다. (side-effect 는 여기서 일어납니다). State에게 변할 내용의 힌트를 줍니다.
+
+Action, Mutation , State에 대한 자세한 내용은 [ReactorKit](https://github.com/ReactorKit/ReactorKit) 에서 확인할 수 있습니다.
+
+
+* ReactorKit은 리액터 내부의 흐름을 `RxJs`로 연결합니다.
+즉, Action, Mutation, State는 각각 `Rx.Observable`로 연결되어있습니다.
+* View에서 Action으로 신호를 emit 하면, Action Observable은 그 신호를 받고  `mutate()`를 통해 Action->Mutation을 진행합니다. 완료시에, Mutation Observable로 전달합니다. Mutation Observable은  `reduce()`를 통해 Mutation 단계의 결과값을 새로운 state로 만들고 State Observable을 부릅니다. State Observable은 전달받은 새로운 state를 currentState에 업데이트 합니다.
+* `RxJs`로 구성되어있기때문에 `RxJs`의 강력한 오퍼레이터들을 사용하여 개발 및 테스팅을 할 수 있습니다.
+
+## 메소드
+
+### 생성자
+
+| parameter     | required | default |
+|---------------|----------|---------|
+| initialState  | true     | none    |
+| isStubEnabled | false    | false   |
+| isGlobal      | false    | false   |
+
+- initialState : state의 처음 상태입니다.
+- isStubEnabled : 테스팅용 Stub입니다. View와의 바인딩을 체크하기 위한 용도입니다.
+-  isGlobal: 해당 리액터가 글로벌로 사용될경우, unsubscribe()를 방지하기위해 사용됩니다.
+
+### Mutate & Reduce
+- mutate()는 action으로부터 state를 변경시킬 수 있는 로직을 작성하는 부분입니다.
 ```
-interface State {
-    value: number
-}
-
-export const INCREASE = 'INCREASE'
-export const DECREASE = 'DECREASE'
-
-interface INCREASEACTION { 
-    type: typeof INCREASE
-}
-interface DECREASEACTION { 
-    type: typeof DECREASE
-}
-
-export type ActionType = INCREASEACTION | DECREASEACTION
-```
-
-
-### TestReactor코드
-```
-export class TestReactor extends Reactor<ActionType,State> {
-
-    mutate(action: ActionType): Observable<ActionType> {
-        return of(action);
-    }
-    
-    reduce(state: State, mutation: ActionType): State {
-        let newState = state;
-        switch(mutation.type) {
-            case "DECREASE":
-                newState.value = newState.value - 1; 
-                return newState;
-            case "INCREASE":
-                newState.value = newState.value + 1; 
-                return newState;
-        }
-    }
-
-    transformAction(action: Observable<ActionType>): Observable<ActionType> {
-        return action
-    }
-    transformMutation(mutation: Observable<ActionType>): Observable<ActionType> {
-        return mutation
-    }
-    transformState(state: Observable<State>): Observable<State> {
-        return state
-    }
+mutate(action: ForumAction): Observable<ForumMutation> {
+	switch(action.type) {
+		case "CLICKTOPIC":
+			return concat(
+				//topic change
+				of({type:"TOPICCHANGE", topic:  action.newTopic}),
+				//is Loading
+				of({type:"SETLOADING", isLoading:  true}),
+				//WebRequest
+				this.fetchList(action.newTopic).pipe(
+				takeUntil(this.action.pipe(filter(value  =>  value === action))),
+				map( res  => {
+				return {type:"FETCHLIST", list:  res, page:  1 }
+			})
+		...
+		...
 }
 ```
-
-### View 코드
+- reduce()는 mutation의 결과로부터 state를 업데이트 하는 부분입니다.
 ```
-export class View extends React.PureComponent<{},State> {
-
-viewAction? : Subject<ActionType>;
-    reactor?: TestReactor;
-    
-    constructor(props: {}){
-        super(props);
-        this.state = {
-            value : 0
-        }
-    }
-
-    componentDidMount(){
-        this.viewAction = new Subject<ActionType>();
-        this.reactor = new TestReactor(this.state);
-    }
-
-    // 후에 다시 바인딩을 할 수 있도록, bind()라는 함수를 따로 만들어 빼어줬습니다.
-    bind(){
-        this.viewAction?.subscribe(this.reactor?.action)
-        this.reactor?.state.pipe( 
-            distinctUntilChanged(),
-            map( state => state.value))
-        .subscribe(
-            value=>{
-                this.setState({value})
-            }
-        ) 
-    }
-   
-    render(){
-
-        return(
-            <>
-                <div>
-                    Counter
-                </div>
-                <div>
-                    {this.state.value}
-                </div>
-                <button onClick={()=>{this.viewAction?.next({type:"INCREASE"})}}>
-                    +
-                </button>
-                <button onClick={()=>{this.viewAction?.next({type:"DECREASE"})}}>
-                    -
-                </button>
-
-            </>
-        )
-
-    }
+reduce(state: ForumState, mutation: ForumMutation): ForumState {
+	let  newState = state;
+	switch(mutation.type) {
+		case  "TOPICCHANGE":
+		newState.topic = mutation.topic
+		return  newState;
+	}
+	...
 }
 ```
 
-## 리액트 뷰 연결하는 방법.
-`ReactiveView`라는 Wrapper를 지원합니다. (Class - Component만 지원)
+### Transform
+transform 메소드는 각 스테이지의 `Observable`을 변경할 수 있습니다. Observable을 확장하거나, 특정 operator를 일괄적으로 적용하고 싶을때 사용할 수 있습니다.
+```
+transformState(state: Observable<State>): Observable<State> {
+	return merge(state, otherReactor.state)
+}
+// 이제 이 reactor는 state는 otherReactor의 state또한 구독합니다.
+```
 
-`ReactiveView`의 역할은 `disposeBag`으로 `Subscrpition`을 관리해주고, 컴포넌트가 마운트되면 `bind()`를 수행시켜줍니다.
+```
+transformState(state: Observable<State>): Observable<State> {
+	return state.pipe( tap( _ => console.log("state update!"))
+}
+// 이제 이 reactor는 state는 업데이트 될때마다 console에 로그를 찍습니다.
+```
 
-`ReactiveView`는 `ReactorView`라는 인터페이스를 구현한 뷰에만 정상작동됩니다.
+### Scheduler
+async 스케줄러를 사용하면, 원하는 결과값을 도출 할 수 없습니다.
+기본 스케줄러는 queueScheduler 입니다.
+자세한 내용은 rxjs scheulder를 참조하세요.
+
+### disposeAll
+```
+reactor.disposeAll();
+```
+리액터 안에 사용되는 Observable들의 Subscription 해지합니다.
+
+# React-바인딩
+리액트의 컴포넌트와 바인딩 할 수 있는 HOC와 메소드도 지원합니다. Class Component를 가정하고 동작합니다. (Reactor의 동작과는 독립적이며, 사용하지 않아도 됩니다.)
+
+## ReactiveView (HOC)
+```
+export default ReactiveView(Component);
+```
+사용하기위해서는 Component가 `ReactorView` 라는 인터페이스를 구현해야합니다.
+
+### ReactorView
+```
+ReactorView<P extends  Reactor<any,any,any>> {
+	bind(reactor:P):DisposeBag;
+	reactor?:P;
+}
+```
+`ReactiveView`는  Component의 `ComponentDidMount()`이후에 `bind()`라는 함수를 추가적으로 불러 바인딩을 완성시킵니다.
+
+### Bind
+bind 메소드는 `Component(View)`와 `Reactor`를 연결시켜주는 부분입니다. 
 
 ### 예제
 ```
-class TestView extends React.Component<{}, ModalState> implements ReactorView<ModalReactor> {
+componentDidMount(){
+ this.reactor = new AnyReactor({...})
+}
 
-    reactor?: ModalReactor;
-    
-    constructor(props:{}) {
-        super(props)
+bind(reactor: TableReactor): DisposeBag {
 
-        this.state = {
-            isOpened:false
-        }
-        
-        this.reactor = new ModalReactor(this.state);
-    }
-
-    bind(reactor: ModalReactor): DisposeBag {
-        let disposeBag = new DisposeBag();
-        disposeBag.disposeOf = reactor.state.pipe(map( res => res.isOpened), finalize( ()=> console.log('unsubscribed'))).subscribe(isOpened => this.setState({isOpened}))
-        return disposeBag;
-    }
-    
-    render(){
-        return(<div>
-            <Button onClick={()=>{this.reactor?.action.next({type:"MODALTOGGLE"})}}>A</Button>
-            {(this.state.isOpened)? "A": "B"}
-        </div>)
-    }
+	let  disposeBag = new  DisposeBag();
+	disposeBag.disposeOf = reactor.state.pipe(
+		map( res  =>  res.data ),
+		deepDistinctUntilChanged(),
+		).subscribe( data  => {
+		this.setState({data})
+	})
+return  disposeBag;
 }
 ```
-테스트뷰를 `ReactiveView`로 감싸 Export합니다.
-```
-export default ReactiveView(TestView)
-```
 
-## Global Store
 
-JS 리액터킷 React의 Context API를 활용해 글로벌 스토어를 지원합니다.
+## Global
+React의 Context API와 HOC을 이용해 글로벌 스토어도 지원합니다.
 
 ### 1. Store 등록
-
 글로벌 스토어로 사용할것을 앱의 최상단 루트에서 `register`함수를 이용해 등록합니다.
-
 ```
 const value = register([new ModalReactor({isOpened: false},false,true)])
 ```
@@ -238,68 +213,168 @@ export const GLOBALTEST = Global(TestViewGlobalGetState, ModalReactor.name)
 export const GLOBALTEST2 = Global(TestViewGlobalChangeState, ModalReactor.name)
 ```
 
+# 테스팅
 
-## 테스트방법 (using Jest & Enzyme)
+## (자동) 테스팅 대상.
+1. 리액터의 검증.
+	- 리액터가 원하는 방식대로 Action->Mutate->State 를 따르는지 체크합니다.
+	- 로직 테스트이기 때문에 간단히 테스트할 수 있습니다.
 
-### View -> Reactor 테스트
+2. 뷰와 리액터의 bind() 검증.
+	- 뷰와 리액터가 연결되어 있는지 체크합니다.
+	- 테스트가 까다롭지만, 컴포넌트와 리액터가 서로 바인딩만 되어있는지 검증합니다.
+	
+
+### 1. 리액터 검증
+
+예제 1) action -> state 변경 테스트.
 ```
-    it('INCREASE ONCE TEST', (done)=> {
-        const reactor = new TestReactor({value:0});
-        reactor.action.next({type:"INCREASE"})
-        expect(reactor.currentState.value).toBe(1);
-        done();
-    })
-
-    it('INCREASE-DECREASE TEST - 2', (done)=> {
-        const reactor = new TestReactor({value:0});
-        reactor.action.next({type:"INCREASE"})
-        reactor.action.next({type:"DECREASE"})
-        expect(reactor.currentState.value).toBe(0);
-        done();
-    })
-```
-
-### Reactor -> View 테스트
-```
-it('INCREASE ACTION PROPAGATION TESTING', ()=> {
-
-        // stub 사용 On.
-        const reactor = new TestReactor({value:1}, true);
-        
-        // enzyme을 통해 컴포넌트를 마운트 시킵니다.
-        const wrapper = shallow(<View/>);
-        
-        // 컴포넌트에 reactor를 주입 한 후 bind()를 통해 업데이트 시킵니다. (View코드 참조)
-        (wrapper.instance() as View).reactor = reactor;
-        (wrapper.instance() as View).bind();
-        (wrapper.instance() as View).viewAction?.next({type:"INCREASE"})
-        
-        // stub은 action들을 들어온 액션들을 모두 기록합니다.
-        expect(reactor.stub.actions[reactor.stub.actions.length-1]).toStrictEqual({type:"INCREASE"})
-    })
-
-
-    it('TESTING VIEW AFTER INCREASE STATE CHANGE IN REACTOR', () => {
-    
-        // Stub 사용 on.
-        const reactor = new TestReactor({value:1}, true);
-        
-        // enzyme을 통해 컴포넌트를 마운트 시킵니다.
-        const wrapper = shallow(<View/>);
-        
-        // 컴포넌트에 reactor를 주입 한 후 bind()를 통해 업데이트 시킵니다. (View코드 참조)
-        (wrapper.instance() as View).reactor = reactor;
-        (wrapper.instance() as View).bind();
-        
-        // stub을 통해 state에 직접 상태를 전달할 수 있습니다.
-        (wrapper.instance() as View).reactor?.stub.state.next({value:2});
-        
-        // enzyme을 통해 결과 state를 관찰합니다.
-        const result = (wrapper.state() as {value:number}).value;
-        expect(result).toBe(2);
-    })
+it('click write -> mode change test ', done  => {
+	reactor = new  ForumReactor(initialState);
+	// 액션을 보냅니다.
+	reactor.action.next({type:"CLICKWRITE"})
+	// 액션에 따라 state가 변하는지 체크합니다.
+	expect(reactor.currentState.mode).toBe("edit")
+	done();
+})
 ```
 
+예제 2) 다양한 액션이 일어나는 경우에 대한 테스트.
+```
+it('5. side effect : click topic -> topic change -> loading -> (success) -> loading -> isError false test', done  => {
+
+//moxios 목업 구성.
+moxios.wait(() => {
+	const  request = moxios.requests.mostRecent()
+	request.respondWith({ status:  200, response:  listResultMockup }) 
+})
+
+reactor = new  ForumReactor(initialState);
+
+let  state_change = 0;
+//리액터의 변경을 여기서 구독합니다.
+//concat을 통해 여기서 전달받습니다.
+from(reactor.state).subscribe(
+	state  => {
+        if(state_change === 1) {
+            expect(state.topic).toBe("tips");
+        } else  if (state_change === 2) {
+            expect(state.isLoading).toBeTruthy();
+        } else  if (state_change === 3) {
+            expect(state.list.length).toBe(2);
+        } else  if (state_change === 4) {
+            expect(state.isLoading).toBeFalsy();
+            expect(state.isError).toBeFalsy();
+            done();
+        } else {
+            done.fail();
+        }
+            state_change++;
+        }
+    )
+    reactor.action.next({type:"CLICKTOPIC", newTopic:  "tips"})
+})
+```
+
+## View - Reactor 바인딩 검증.
+### 1. 뷰코드 예시.
+```
+
+class  SomeView  extends  React.Component<{}, ForumState> implements  ReactorView<ForumReactor> {
+
+button?: HTMLElementSubject;
+reactor?: ForumReactor | undefined
+
+constructor(props:{}){
+super(props);
+	this.state = {
+		isError:  false,
+		isLoading:  false,
+		page:  1,
+		mode:"list",
+		topic:"clan",
+		post:  undefined,
+		list:[],
+	}
+}
+
+componentDidMount(){
+	this.reactor = new  ForumReactor(this.state);
+}
+
+bind(reactor: ForumReactor): DisposeBag {
+	let  disposeBag = new  DisposeBag();
+	
+	reactor?.state.pipe(
+	map(res  =>  res.mode),
+	deepDistinctUntilChanged()
+	).subscribe( mode  =>  this.setState({mode}))
+	return  disposeBag;
+}
+
+render(){
+	return (
+		<button onClick={()=>{this.reactor.next({type:"CLICKBACK"}}></button>
+	)
+}
+}
+```
+### 2. 테스트 코드
+```
+it('9. View Binding Check', done  => {
+	
+	reactor = new  ForumReactor(initialState, true);
+
+	// enzyme을 통해 마운트시키기
+	const  wrapper = shallow(<R6Table></R6Table>);
+
+	// 1. 리액터가 이미 존재하는지 체크.
+	expect((wrapper.instance() as  any).reactor).not.toBe(undefined);
+
+	// 2. 테스트에서 사용할 리액터를 주입.
+	(wrapper.instance() as  any).reactor = reactor;
+
+	// 3. bind()를 수동으로 다시 불러 리액터 업데이트 시키기.
+	(wrapper.instance() as  any).bind(reactor);
+
+	// 4. enzyme을 통해 button을 시뮬레이트한다.
+	wrapper.find('button').at(0).simulate('click')
+
+	// 5. stub은 모든 액션 기록을 저장한다. 액션을 비교한다.
+	expect(reactor.stub.lastAction.type).toBe("CLICKBACK");
+
+	// 6. stub은 또한 state에서 액션을 내보낼 수 있다.
+	reactor.stub.state.next({...initialState, mode :  "edit"});
+
+	// 7. 액션을 내보낸 뒤, state가 제대로 변경되었는지 체크한다.
+	expect((wrapper.state() as  ForumState).mode).toBe("edit");
+	done();
+})
+```
+
+
+## 그 외 예제.
+
+### Action & Mutation & State정의
+```
+interface State {
+    value: number
+}
+
+export const INCREASE = 'INCREASE'
+export const DECREASE = 'DECREASE'
+
+interface INCREASEACTION { 
+    type: typeof INCREASE
+}
+interface DECREASEACTION { 
+    type: typeof DECREASE
+}
+
+export type ActionType = INCREASEACTION | DECREASEACTION
+```
+`Redux`의 유틸 라이브러리를 활용해 조금더 타입을 생성할 수 있습니다.
+[typesface-actions](https://github.com/piotrwitek/typesafe-actions)
 ### To-do list
 
 - [x] initial Commit
@@ -311,10 +386,6 @@ it('INCREASE ACTION PROPAGATION TESTING', ()=> {
 - [X] 뷰 .
 - [ ] 코드 테스트.
 - [ ] 디버깅 기능 추가.
-
-### 업데이트내역.
-- disposeBag 추가
-- ReactorView Interface
 
 ### Dependency
 - Rxjs 

@@ -1,8 +1,9 @@
+
 # JS - ReactorKit
 
 Inspired by [ReactorKit](https://github.com/ReactorKit/ReactorKit)
 
-`React` 웹 개발시에 뷰와 `State`를 변경하는 로직을 구분하고, 테스트를 보다 직관적으로 진행하기 위해 `ReactorKit`을 본따 만들었습니다. 타입스크립트 전용입니다.
+`React`로 웹 개발시에 컴포넌트의 `State`를 변경하는 로직을 구분하고, 테스트를 보다 직관적으로 진행하기 위해 `ReactorKit`을 본따 만들었습니다.
 
 ## Concept
 `View call(Action) -> Reactor[Action-> Mutation -> State] -> View update(State)`
@@ -12,7 +13,6 @@ Inspired by [ReactorKit](https://github.com/ReactorKit/ReactorKit)
 - Mutation : 액션의 행동으로 변하게 되는 뷰의 상태에 대한 정의를 하는 부분입니다. (side-effect 는 여기서 일어납니다). State에게 변할 내용의 힌트를 줍니다.
 
 Action, Mutation , State에 대한 자세한 내용은 [ReactorKit](https://github.com/ReactorKit/ReactorKit) 에서 확인할 수 있습니다.
-
 
 * ReactorKit은 리액터 내부의 흐름을 `RxJs`로 연결합니다.
 즉, Action, Mutation, State는 각각 `Rx.Observable`로 연결되어있습니다.
@@ -95,7 +95,7 @@ reactor.disposeAll();
 리액터 안에 사용되는 Observable들의 Subscription 해지합니다.
 
 # React-바인딩
-리액트의 컴포넌트와 바인딩 할 수 있는 HOC와 메소드도 지원합니다. Class Component를 가정하고 동작합니다. (Reactor의 동작과는 독립적이며, 사용하지 않아도 됩니다.)
+리액트의 컴포넌트와 바인딩 할 수 있는 HOC와 메소드도 지원합니다.
 
 ## ReactiveView (HOC)
 ```
@@ -211,6 +211,35 @@ class TestViewGlobalChangeState extends React.Component<GlobalReactorProps<Modal
 ```
 export const GLOBALTEST = Global(TestViewGlobalGetState, ModalReactor.name)
 export const GLOBALTEST2 = Global(TestViewGlobalChangeState, ModalReactor.name)
+```
+
+# ReactorHook (beta)
+Functional Component 에서 리액터를 사용할 수 있도록 나온 FC전용 리액터 입니다. Reactor와 기본방식은 같으나 상태관리에 사용할 수 있는 custom hook을 추가하였습니다.
+
+* 뷰와 별도의 바인딩 과정 없이, state의 변화가 감지되면 뷰가 업데이트됩니다.
+```
+const initalState = {a:123}
+
+function  MyView(){
+	const [reactor, currentState] = MyReactor.use(initalState);
+	return (
+	<>
+		<button  onClick={()=>{reactor.action.next({})}}>button</button>
+		<div>  {currentState.a}</div>
+	</>
+	)
+}
+```
+
+```
+class MyReactor extends ReactorHook<Action,State..> {
+	mutate(){
+		.....
+	}
+	reduce() {
+		....
+	}
+}
 ```
 
 # 테스팅
@@ -384,6 +413,7 @@ export type ActionType = INCREASEACTION | DECREASEACTION
 - [X] 테스트 기능.
 - [X] 문서작성.
 - [X] 뷰 .
+- [X] 훅기능 추가 (beta)
 - [ ] 코드 테스트.
 - [ ] 디버깅 기능 추가.
 

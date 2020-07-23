@@ -11,7 +11,6 @@ export class Stub<SAction, SState, SMutate> {
         this.state = new BehaviorSubject<SState>(reactor.initialState);
         this.action = new Subject<SAction>();
 
-        
         reactor.disposedBy = this.state.asObservable()
         .subscribe(
             state=> { 
@@ -24,6 +23,13 @@ export class Stub<SAction, SState, SMutate> {
                 this.actions.push(action)
             }
         )
+    }
 
+    get lastAction(): SAction {
+        if (this.actions.length < 1) {
+            return this.actions[0];
+        } else {
+            return this.actions[this.actions.length-1]
+        }
     }
 }

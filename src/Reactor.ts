@@ -34,9 +34,7 @@ export abstract class Reactor<Action = {}, State = {}, Mutation = Action> {
     }
 
     constructor(initialState : State, isStubEnabled : boolean = false, isGlobal : boolean = false){
-        
-        //고유키값생성.
-        
+            
         this._isGlobal = isGlobal
         this.dummyAction = new Subject<any>(); 
 
@@ -52,14 +50,9 @@ export abstract class Reactor<Action = {}, State = {}, Mutation = Action> {
         }
     }
 
-    // static get reactorName(){
-    //     return this.constructor.name
-    // }
-
     get name(){
         return this.constructor.name
     }
-
 
     abstract mutate(action : Action): Observable<Mutation>;
     abstract reduce(state: State, mutation: Mutation): State;
@@ -74,9 +67,6 @@ export abstract class Reactor<Action = {}, State = {}, Mutation = Action> {
         return state;
     }
 
-    /// https://blog.codecentric.de/en/2018/01/different-ways-unsubscribing-rxjs-observables-angular/
-    /// https://medium.com/angular-in-depth/rxjs-avoiding-takeuntil-leaks-fb5182d047ef
-    /// rxjs operator.  
     disposeOperator(){
         return takeUntil(this.dummyAction)
     }
@@ -111,9 +101,6 @@ export abstract class Reactor<Action = {}, State = {}, Mutation = Action> {
         return this._disposeBag;
     }
 
-    //we can use take until.
-    //using  view..
-    //finalziae
     private createStream(): Observable<State> {
 
         let action = this.action.pipe( observeOn(this.scheduler))

@@ -10,7 +10,7 @@ export const GlobalReactor = React.createContext<GlobalReactorType>({});
 export function register( globalReactorList : Reactor<any,any,any>[] ): GlobalReactorType{
         return globalReactorList.reduce( (prev, curr) => {
             if (!curr.isGlobal) {
-                console.warn("this reactor is not set as global." )
+                console.warn("This reactor is not set as global. Please set them as GlobalReactor to avoid being disposed." )
             }
             prev[curr.name] = curr;
             return prev;

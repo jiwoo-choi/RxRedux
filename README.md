@@ -1,9 +1,26 @@
 
 # JS - ReactorKit
 
+
+
 Inspired by [ReactorKit](https://github.com/ReactorKit/ReactorKit)
 
 `React`로 웹 개발시에 컴포넌트의 `State`를 변경하는 로직을 구분하고, 테스트를 보다 직관적으로 진행하기 위해 `ReactorKit`을 본따 만들었습니다.
+<p align="center">
+ 
+  <a href="https://github.com/jiwoo-choi/JS-ReactorKit" target="_blank">
+    <img src="https://img.shields.io/badge/React-^16.13.1-green">
+  </a>
+
+ <a href="https://github.com/jiwoo-choi/JS-ReactorKit" target="_blank">
+    <img src="https://img.shields.io/badge/Rxjs-^6.6.0-green">
+  </a>
+  
+  <a href="https://github.com/jiwoo-choi/JS-ReactorKit" target="_blank">
+    <img src="https://img.shields.io/badge/Typescript-~3.7.2-green">
+  </a>
+</p>
+
 
 ## Concept
 `View call(Action) -> Reactor[Action-> Mutation -> State] -> View update(State)`

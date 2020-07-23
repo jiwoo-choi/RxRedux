@@ -1,5 +1,5 @@
 import React from "react";
-import { Reactor } from "./Reactor";
+import { Reactor } from "./";
 
 export interface GlobalReactorType {
     [key:string]: Reactor<any,any,any>

@@ -1,9 +1,8 @@
 import { Observable ,Subject, Scheduler, empty, queueScheduler, Subscription } from 'rxjs'
 import { flatMap, startWith, scan, catchError, shareReplay, tap,  observeOn, takeUntil} from 'rxjs/operators'
-import { Stub } from './Stub';
-import { DisposeBag } from './DisposeBag';
+import { DisposeBag, Stub } from './';
 
-export abstract class Reactor<Action = {}, State = {}, Mutation = Action> {
+export default abstract class Reactor<Action = {}, State = {}, Mutation = Action> {
 
     private _isGlobal: boolean;
     private dummyAction: Subject<any>;

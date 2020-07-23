@@ -1,24 +1,35 @@
 {
   "name": "jsreactorkit",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "ReactorKit for Javascript and React.",
+  "main": "dist/index.js",
+  "types" : "dist/index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc"
   },
   "repository": {
     "type": "git",
     "url": "git+https://jiwoo-choi@github.com/jiwoo-choi/JSReactorKit.git"
   },
-  "author": "",
+  "author": "jiwoo choi",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/jiwoo-choi/JSReactorKit/issues"
   },
   "homepage": "https://github.com/jiwoo-choi/JSReactorKit#readme",
   "dependencies": {
-    "@types/lodash": "^4.14.157",
+    "@types/react": "^16.9.43",
+    "react": "^16.13.1"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.14.158",
     "lodash": "^4.17.19",
-    "rxjs": "^6.6.0"
-  }
+    "rxjs": "^6.6.0",
+    "typescript": "^3.9.7"
+  },
+  "keywords": [
+    "reactorkit",
+    "typescript",
+    "react"
+  ]
 }

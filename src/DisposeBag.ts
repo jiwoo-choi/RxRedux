@@ -2,7 +2,7 @@ import { forOwn } from 'lodash';
 import { Subscription } from 'rxjs';
 //https://github.com/RonasIT/dispose-bag
 
-export class DisposeBag {
+export default class DisposeBag {
   private subscriptions: Subscription;
   private namedSubscriptions: { [name: string]: Subscription };
 

@@ -1,7 +1,7 @@
-import {Reactor} from './Reactor'
+import {Reactor} from './'
 import {BehaviorSubject, Subject} from 'rxjs'
 
-export class Stub<SAction, SState, SMutate> {
+export default class Stub<SAction, SState, SMutate> {
 
     public state: BehaviorSubject<SState>;
     public action: Subject<SAction>;

@@ -1,10 +1,10 @@
-import { Reactor } from "./Reactor";
+import { Reactor } from "./";
 import { Observable } from "rxjs";
 import { useState } from "react";
 import { tap } from "rxjs/operators";
 
 
-export abstract class ReactorHook<Action,State,Mutation = Action> extends Reactor<Action,State,Mutation> {
+export default abstract class ReactorHook<Action,State,Mutation = Action> extends Reactor<Action,State,Mutation> {
 
     private static setState:any;
     private static updator:number = 1;

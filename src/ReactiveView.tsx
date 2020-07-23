@@ -1,6 +1,5 @@
-import { Reactor } from "./Reactor";
+import { Reactor, DisposeBag } from "./";
 import { ComponentClass } from "react";
-import { DisposeBag } from "./DisposeBag";
 import React from "react";
 import { GlobalReactor } from "./GlobalStore";
 

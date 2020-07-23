@@ -1,0 +1,30 @@
+import { Observable, Subject, Scheduler, Subscription } from 'rxjs';
+import { DisposeBag, Stub } from './';
+export default abstract class Reactor<Action = {}, State = {}, Mutation = Action> {
+    private _isGlobal;
+    private dummyAction;
+    action: Subject<Action>;
+    private _initialState;
+    currentState: State;
+    private _state;
+    private _stub?;
+    protected scheduler: Scheduler;
+    private _disposeBag;
+    get initialState(): State;
+    get state(): Observable<State>;
+    get stub(): Stub<Action, State, Mutation> | undefined;
+    get isGlobal(): boolean;
+    constructor(initialState: State, isStubEnabled?: boolean, isGlobal?: boolean);
+    get name(): string;
+    abstract mutate(action: Action): Observable<Mutation>;
+    abstract reduce(state: State, mutation: Mutation): State;
+    protected transformAction(action: Observable<Action>): Observable<Action>;
+    protected transformMutation(mutation: Observable<Mutation>): Observable<Mutation>;
+    protected transformState(state: Observable<State>): Observable<State>;
+    disposeOperator(): import("rxjs").MonoTypeOperatorFunction<unknown>;
+    disposeAll2(): void;
+    disposeAll(): void;
+    set disposedBy(subscription: Subscription | undefined);
+    get disposeBag(): DisposeBag;
+    private createStream;
+}

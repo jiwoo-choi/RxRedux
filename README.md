@@ -21,6 +21,11 @@ Inspired by [ReactorKit](https://github.com/ReactorKit/ReactorKit)
   </a>
 </p>
 
+## installation
+
+```
+npm i jsreactorkit
+```
 
 ## Concept
 `View call(Action) -> Reactor[Action-> Mutation -> State] -> View update(State)`

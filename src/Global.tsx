@@ -1,9 +1,9 @@
 import React from "react";
 // import { ReactorView } from "./ReactorView";
-import { Reactor } from "./";
+import {  } from "./";
 import { GlobalReactor, GlobalReactorType } from "./GlobalStore";
-import ReactiveView, { reactorAccessible, reactorTesterKit } from "./ReactiveView";
-import { DisposeBag } from "./";
+import { reactorAccessible, reactorTesterKit } from "./ReactiveView";
+import { DisposeBag, Reactor  } from "./";
 
 
 export interface GlobalReactorProps<R,S>{

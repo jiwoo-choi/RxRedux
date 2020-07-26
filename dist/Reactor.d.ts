@@ -1,23 +1,28 @@
 import { Observable, Subject, Scheduler, Subscription } from 'rxjs';
-import { DisposeBag, Stub } from './';
+import { Stub } from './';
+import { DisposeBag } from './';
 export default abstract class Reactor<Action = {}, State = {}, Mutation = Action> {
-    private _isGlobal;
     private dummyAction;
-    action: Subject<Action>;
+    private _action;
     private _initialState;
     currentState: State;
     private _state;
-    private _stub?;
+    private _stub;
     protected scheduler: Scheduler;
     private _disposeBag;
+    private _isStubEnabled;
+    /** unique ID  */
+    readonly REACTORID$ = "REACTORKIT_REACTOR";
     get initialState(): State;
     get state(): Observable<State>;
-    get stub(): Stub<Action, State, Mutation> | undefined;
-    get isGlobal(): boolean;
-    constructor(initialState: State, isStubEnabled?: boolean, isGlobal?: boolean);
+    get stub(): Stub<Action, State, Mutation>;
+    get action(): Subject<Action>;
+    constructor(initialState: State, isStubEnabled?: boolean);
     get name(): string;
     abstract mutate(action: Action): Observable<Mutation>;
     abstract reduce(state: State, mutation: Mutation): State;
+    dispatch(action: Action): void;
+    _dispatch(action: Action): () => void;
     protected transformAction(action: Observable<Action>): Observable<Action>;
     protected transformMutation(mutation: Observable<Mutation>): Observable<Mutation>;
     protected transformState(state: Observable<State>): Observable<State>;

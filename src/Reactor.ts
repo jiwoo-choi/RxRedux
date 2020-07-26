@@ -1,20 +1,23 @@
 import { Observable ,Subject, Scheduler, empty, queueScheduler, Subscription } from 'rxjs'
-import { flatMap, startWith, scan, catchError, shareReplay, tap,  observeOn, takeUntil} from 'rxjs/operators'
-import { DisposeBag, Stub } from './';
+import { flatMap, startWith, scan, catchError, shareReplay, tap,  observeOn, takeUntil, switchMap} from 'rxjs/operators'
+import { Stub } from './';
+import { DisposeBag } from './';
 
 export default abstract class Reactor<Action = {}, State = {}, Mutation = Action> {
 
-    private _isGlobal: boolean;
     private dummyAction: Subject<any>;
-    public action : Subject<Action>;
-    private _initialState! : State; // only set once, then read-only. 
-    public currentState! : State; // this does not affect actual value. this value is only for test.
-    private _state!: Observable<State>; // nobody cannot change state except this.
-    private _stub?: Stub<Action,State,Mutation>; 
-    protected scheduler : Scheduler = queueScheduler; //only subclass can change scheduler.
-    private _disposeBag : DisposeBag = new DisposeBag(); //only 
+    private _action : Subject<Action>;
+    
+    private _initialState! : State; 
+    public currentState! : State; 
+    private _state!: Observable<State>; 
+    private _stub!: Stub<Action,State,Mutation>; 
+    protected scheduler : Scheduler = queueScheduler; 
+    private _disposeBag : DisposeBag = new DisposeBag();
+    private _isStubEnabled : boolean;
 
-    // private actionWeakMap = new WeakMap();
+    /** unique ID  */
+    public readonly REACTORID$ = "REACTORKIT_REACTOR" 
 
     get initialState() {
         return this._initialState;
@@ -28,27 +31,25 @@ export default abstract class Reactor<Action = {}, State = {}, Mutation = Action
         return this._stub;
     }
 
-    get isGlobal() {
-        return this._isGlobal;
+    get action(){
+        return this._action;
     }
 
-    constructor(initialState : State, isStubEnabled : boolean = false, isGlobal : boolean = false){
-            
-        this._isGlobal = isGlobal
+    constructor(initialState : State, isStubEnabled : boolean = false){
+        
+        this._isStubEnabled = isStubEnabled;
         this.dummyAction = new Subject<any>(); 
-
         this._initialState = initialState;
 
-        if (isStubEnabled) {
+        if (this._isStubEnabled) {
             this._stub = new Stub(this);
-            this.action = this.stub!.action;
+            this._action = this.stub!.action;
             this._state = this.stub!.state
         } else {
-            this.action = new Subject<Action>();
+            this._action = new Subject<Action>();
             this._state = this.createStream();
         }
     }
-
     get name(){
         return this.constructor.name
     }
@@ -56,15 +57,29 @@ export default abstract class Reactor<Action = {}, State = {}, Mutation = Action
     abstract mutate(action : Action): Observable<Mutation>;
     abstract reduce(state: State, mutation: Mutation): State;
 
+    public dispatch(action : Action) {
+        this.action.next(action)
+    }
+
+    public _dispatch(action : Action) {
+        let self = this;
+        return function () {
+            self.action.next(action)
+        }
+    }
+
     protected transformAction(action: Observable<Action>): Observable<Action> {
         return action;
     }
+
     protected transformMutation(mutation: Observable<Mutation>): Observable<Mutation> {
         return mutation;
     }
+
     protected transformState(state: Observable<State>): Observable<State> {
         return state;
     }
+
 
     disposeOperator(){
         return takeUntil(this.dummyAction)
@@ -76,23 +91,12 @@ export default abstract class Reactor<Action = {}, State = {}, Mutation = Action
     }
 
     disposeAll(){
-        if (this.isGlobal) {
-            console.warn("This Reactor is not supposed to disposed. Please check your codes again.")
-        } else {
-            this.disposeBag.unsubscribe();
-        }
+        this.disposeBag.unsubscribe();
     }
     
     set disposedBy(subscription: Subscription | undefined) {
         if (subscription) {
-
-            if (this.isGlobal) {
-                console.warn("This Reactor is not supposed to disposed bag. Please check your codes again.")
-            } else {
                 this.disposeBag.add(subscription)
-            }
-        } else {
-            return;
         }
     }
 
@@ -102,14 +106,14 @@ export default abstract class Reactor<Action = {}, State = {}, Mutation = Action
 
     private createStream(): Observable<State> {
 
-        let action = this.action.pipe( observeOn(this.scheduler))
+        let action = this.action.pipe(observeOn(this.scheduler))
         let transformedAction : Observable<Action> = this.transformAction(action);
         let mutation = transformedAction.pipe( 
             flatMap(
                 (action) => {
                     return this.mutate(action).pipe(catchError( err => empty()))
                 }
-            )
+            ) 
         )
 
         let transformedMutation : Observable<Mutation> = this.transformMutation(mutation);
@@ -121,7 +125,7 @@ export default abstract class Reactor<Action = {}, State = {}, Mutation = Action
             catchError( () => {
                 return empty()
             })
-            ,startWith(this.initialState),
+            ,startWith(this.initialState), 
         )
 
         let transformedState : Observable<State> = this.transformState(state)

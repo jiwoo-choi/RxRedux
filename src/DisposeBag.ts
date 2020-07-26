@@ -1,6 +1,6 @@
 import { forOwn } from 'lodash';
 import { Subscription } from 'rxjs';
-//https://github.com/RonasIT/dispose-bag
+// disposebag : https://github.com/RonasIT/dispose-bag
 
 export default class DisposeBag {
   private subscriptions: Subscription;
@@ -11,8 +11,10 @@ export default class DisposeBag {
     this.namedSubscriptions = {};
   }
 
-  set disposeOf(subscription : Subscription) {
-    this.subscriptions.add(subscription)
+  set disposeOf(subscription : Subscription | undefined) {
+    if (subscription) {
+      this.subscriptions.add(subscription)
+    }
   }
   
   public add(subscription: Subscription, name?: string): void {

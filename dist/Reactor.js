@@ -1,27 +1,28 @@
 import { Subject, empty, queueScheduler } from 'rxjs';
 import { flatMap, startWith, scan, catchError, shareReplay, tap, observeOn, takeUntil } from 'rxjs/operators';
-import { DisposeBag, Stub } from './';
+import { Stub } from './';
+import { DisposeBag } from './';
 var Reactor = /** @class */ (function () {
-    function Reactor(initialState, isStubEnabled, isGlobal) {
+    function Reactor(initialState, isStubEnabled) {
         if (isStubEnabled === void 0) { isStubEnabled = false; }
-        if (isGlobal === void 0) { isGlobal = false; }
-        this.scheduler = queueScheduler; //only subclass can change scheduler.
-        this._disposeBag = new DisposeBag(); //only 
-        this._isGlobal = isGlobal;
+        this.scheduler = queueScheduler;
+        this._disposeBag = new DisposeBag();
+        /** unique ID  */
+        this.REACTORID$ = "REACTORKIT_REACTOR";
+        this._isStubEnabled = isStubEnabled;
         this.dummyAction = new Subject();
         this._initialState = initialState;
-        if (isStubEnabled) {
+        if (this._isStubEnabled) {
             this._stub = new Stub(this);
-            this.action = this.stub.action;
+            this._action = this.stub.action;
             this._state = this.stub.state;
         }
         else {
-            this.action = new Subject();
+            this._action = new Subject();
             this._state = this.createStream();
         }
     }
     Object.defineProperty(Reactor.prototype, "initialState", {
-        // private actionWeakMap = new WeakMap();
         get: function () {
             return this._initialState;
         },
@@ -42,9 +43,9 @@ var Reactor = /** @class */ (function () {
         enumerable: false,
         configurable: true
     });
-    Object.defineProperty(Reactor.prototype, "isGlobal", {
+    Object.defineProperty(Reactor.prototype, "action", {
         get: function () {
-            return this._isGlobal;
+            return this._action;
         },
         enumerable: false,
         configurable: true
@@ -56,6 +57,15 @@ var Reactor = /** @class */ (function () {
         enumerable: false,
         configurable: true
     });
+    Reactor.prototype.dispatch = function (action) {
+        this.action.next(action);
+    };
+    Reactor.prototype._dispatch = function (action) {
+        var self = this;
+        return function () {
+            self.action.next(action);
+        };
+    };
     Reactor.prototype.transformAction = function (action) {
         return action;
     };
@@ -73,25 +83,12 @@ var Reactor = /** @class */ (function () {
         this.dummyAction.complete();
     };
     Reactor.prototype.disposeAll = function () {
-        if (this.isGlobal) {
-            console.warn("This Reactor is not supposed to disposed. Please check your codes again.");
-        }
-        else {
-            this.disposeBag.unsubscribe();
-        }
+        this.disposeBag.unsubscribe();
     };
     Object.defineProperty(Reactor.prototype, "disposedBy", {
         set: function (subscription) {
             if (subscription) {
-                if (this.isGlobal) {
-                    console.warn("This Reactor is not supposed to disposed bag. Please check your codes again.");
-                }
-                else {
-                    this.disposeBag.add(subscription);
-                }
-            }
-            else {
-                return;
+                this.disposeBag.add(subscription);
             }
         },
         enumerable: false,

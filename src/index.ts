@@ -2,21 +2,7 @@ export {
     default as DisposeBag
 } from './DisposeBag'
 
-export {
-    default as Global
-} from './Global'
-
-export {
-    GlobalReactor,
-    getGlobalReactorWith
-} from './GlobalStore'
-
-export { default as ReactiveView } from './ReactiveView'
-
-export type {
-    reactorAccessible,
-    reactorTesterKit
-} from './ReactiveView'
+export { default as useReactor } from './useReactor'
 
 export {
     default as Reactor
@@ -30,6 +16,13 @@ export {
     default as ReactorHook
 } from './ReactorHook'
 
+export {
+    default as ReactorGroup
+} from './ReactorGroup'
 
-export type { GlobalReactorType } from './GlobalStore'
-
+export {
+    catchErrorJustReturn,
+    catchErrorReturnEmpty,
+    deepDistinctUntilChanged,
+    
+} from './RxjsExtension'

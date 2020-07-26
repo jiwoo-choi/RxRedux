@@ -1,6 +1,6 @@
 import { forOwn } from 'lodash';
 import { Subscription } from 'rxjs';
-//https://github.com/RonasIT/dispose-bag
+// disposebag : https://github.com/RonasIT/dispose-bag
 var DisposeBag = /** @class */ (function () {
     function DisposeBag() {
         this.subscriptions = new Subscription();
@@ -8,7 +8,9 @@ var DisposeBag = /** @class */ (function () {
     }
     Object.defineProperty(DisposeBag.prototype, "disposeOf", {
         set: function (subscription) {
-            this.subscriptions.add(subscription);
+            if (subscription) {
+                this.subscriptions.add(subscription);
+            }
         },
         enumerable: false,
         configurable: true

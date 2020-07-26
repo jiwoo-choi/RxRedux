@@ -1,7 +1,7 @@
 {
-  "name": "jsreactorkit",
-  "version": "1.0.1",
-  "description": "ReactorKit for Javascript and React.",
+  "name": "reactivex-redux",
+  "version": "1.0.3",
+  "description": "Redux using Rxjs.",
   "main": "dist/index.js",
   "types" : "dist/index.d.ts",
   "scripts": {
@@ -9,14 +9,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://jiwoo-choi@github.com/jiwoo-choi/JSReactorKit.git"
+    "url": "git+https://jiwoo-choi@github.com/jiwoo-choi/RxRedux.git"
   },
   "author": "jiwoo choi",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/jiwoo-choi/JSReactorKit/issues"
+    "url": "https://github.com/jiwoo-choi/RxRedux/issues"
   },
-  "homepage": "https://github.com/jiwoo-choi/JSReactorKit#readme",
+  "homepage": "https://github.com/jiwoo-choi/RxRedux#readme",
   "dependencies": {
     "@types/react": "^16.9.43",
     "react": "^16.13.1"
@@ -26,10 +26,5 @@
     "lodash": "^4.17.19",
     "rxjs": "^6.6.0",
     "typescript": "^3.9.7"
-  },
-  "keywords": [
-    "reactorkit",
-    "typescript",
-    "react"
-  ]
+  }
 }

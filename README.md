@@ -1,12 +1,10 @@
 
-# JS - ReactorKit
-
-
+# RxRedux
 
 Inspired by [ReactorKit](https://github.com/ReactorKit/ReactorKit)
 
 `React`로 웹 개발시에 컴포넌트의 `State`를 변경하는 로직을 구분하고, 테스트를 보다 직관적으로 진행하기 위해 Swift의 `ReactorKit` 프레임워크를 을 본따 만들었습니다.
-`Redux`의 패턴과 비슷하나, 모든 흐름이 `rxjs`로 컨트롤 됩니다.
+`Redux`의 패턴과 비슷하나, 모든 흐름을 `rxjs`로 컨트롤 합니다.
 
 <p align="center">
  

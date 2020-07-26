@@ -124,19 +124,6 @@ reactor.disposeAll();
 export default useReactor(Component);
 ```
 
-
-## Global
-React의 Context API와 HOC을 이용해 글로벌 스토어도 지원합니다.
-
-### 1. Store 등록
-글로벌 스토어로 사용할것을 앱의 최상단 루트에서 `register`함수를 이용해 등록합니다.
-```
-const value = register([new ModalReactor({isOpened: false},false,true)])
-```
-
-### 2. Provider
-
-
 # ReactorHook (Experimental)
 Functional Component 에서 리액터를 사용할 수 있도록 나온 FC전용 리액터 입니다. Reactor와 기본방식은 같으나 상태관리에 사용할 수 있는 custom hook을 추가하였습니다.
 

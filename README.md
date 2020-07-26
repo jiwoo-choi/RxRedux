@@ -3,43 +3,167 @@
 
 Inspired by [ReactorKit](https://github.com/ReactorKit/ReactorKit)
 
-`React`로 웹 개발시에 컴포넌트의 `State`를 변경하는 로직을 구분하고, 테스트를 보다 직관적으로 진행하기 위해 Swift의 `ReactorKit` 프레임워크를 을 본따 만들었습니다.
-`Redux`의 패턴과 비슷하나, 모든 흐름을 `rxjs`로 컨트롤 합니다.
+RxRedux is a framework for React Web Application to seperate view model from view logic to make entire codes more testable.
 
-<p align="center">
- 
-  <a href="https://github.com/jiwoo-choi/JS-ReactorKit" target="_blank">
-    <img src="https://img.shields.io/badge/React-^16.13.1-green">
-  </a>
-
- <a href="https://github.com/jiwoo-choi/JS-ReactorKit" target="_blank">
-    <img src="https://img.shields.io/badge/Rxjs-^6.6.0-green">
-  </a>
-  
-  <a href="https://github.com/jiwoo-choi/JS-ReactorKit" target="_blank">
-    <img src="https://img.shields.io/badge/Typescript-~3.7.2-green">
-  </a>
-</p>
+Most of concepts of this project are identical to [ReactorKit](https://github.com/ReactorKit/ReactorKit), You can check the detailed explanation of specific concepts of this framework in its [repository](https://github.com/ReactorKit/ReactorKit). 
 
 ## Installation
-
 ```
 npm i reactivex-redux
 ```
 
-## Concept
-`View call(Action) -> Reactor[Action-> Mutation -> State] -> View update(State)`
+## Reactor
+Reactor is "UI-independent" View-Model layer which manages the state of a view.
 
-- Action : 뷰의 행동입니다. 순수하게 뷰의 행동만을 추상화 합니다.  Mutate에게 변할 내용에 대한 힌트를 줍니다.
-- State: 뷰의 상태 입니다. 뷰의 결과 상태를 추상화합니다.
-- Mutation : 액션의 행동으로 변하게 되는 뷰의 상태에 대한 정의를 하는 부분입니다. (side-effect 는 여기서 일어납니다). State에게 변할 내용의 힌트를 줍니다.
+### Main Concepts
 
-Action, Mutation , State에 대한 자세한 내용은 [ReactorKit](https://github.com/ReactorKit/ReactorKit) 에서 확인할 수 있습니다.
+- Action : Abstraction of the user interaction.
+- Mutation : The stage or process which can mutate the app's state.
+- State : Abstraction of view's state.
 
-* ReactorKit은 리액터 내부의 흐름을 `RxJs`로 연결합니다.
-즉, Action, Mutation, State는 각각 `Rx.Observable`로 연결되어있습니다.
-* View에서 Action으로 신호를 emit 하면, Action Observable은 그 신호를 받고  `mutate()`를 통해 Action->Mutation을 진행합니다. 완료시에, Mutation Observable로 전달합니다. Mutation Observable은  `reduce()`를 통해 Mutation 단계의 결과값을 새로운 state로 만들고 State Observable을 부릅니다. State Observable은 전달받은 새로운 state를 currentState에 업데이트 합니다.
-* `RxJs`로 구성되어있기때문에 `RxJs`의 강력한 오퍼레이터들을 사용하여 개발 및 테스팅을 할 수 있습니다.
+View -> Dispatching Action -> [Action -> Mutation -> State] -> new state -> View Update.
+
+### How Reactor works with React-Components.
+
+1. An Element in the component (like a button) dispatches the action.
+2. Reactor's `Action` receives the action.
+3. Reactor convert this stream to `Mutation` stream through `mutate()` method.
+4. Reactor's `Mutation` stage mutates the states (side effecct happens in this stage).
+5. This will call `reduce()` methods to reduce old state to new state.
+6. new states will be updated in the view component whcih subscribes the Reactor.
+
+
+### Example: Reactor
+Reactor is an abstract class, which requires you to implement `mutate()` and `reduce()` with `Action`, `Mutation`, `State` types.
+
+### Example 1: Creating Type for `Action`, `Mutation`, `State`
+
+**Action**
+```
+export const CLICKTOPIC = "CLICKTOPIC"
+
+export interface CLICKTOPIC {
+    type: typeof CLICKTOPIC;
+    newTopic: Topic,
+}
+
+export type ForumAction = CLICKTOPIC
+```
+**Mutation**
+```
+export const SETLOADING = "SETLOADING"
+export const FETCHLIST = "FETCHLIST"
+
+export interface SETLOADING {
+    type: typeof SETLOADING,
+    isLoading: boolean,
+}
+
+export interface FETCHLIST {
+    type: typeof FETCHLIST,
+    list: ListType[],
+    page: number
+}
+
+type ForumMutation = SETLOADING | FETCHLIST 
+```
+**State & InitialState **
+```
+export interface ForumState {
+    topic : Topic,
+    mode: Mode,
+    page: number,
+    list: ListType[],
+    isLoading:boolean,
+    isError:boolean,
+    post?: ContentType,
+    isLogined: boolean,
+}
+export const ForumStateInitialState : ForumState = {
+    isError: false,
+    isLoading: true,
+    page: 1,
+    mode:"list",
+    topic:"tips",
+    post: undefined,
+    list:[],
+    isLogined: false,
+}
+```
+
+If you know the better way to create type, go for it.
+
+you could check out Redux's action generator library. [typesface-actions](https://github.com/piotrwitek/typesafe-actions)
+
+
+**Construct Class**
+
+You need to implement two method `mutate()` and `reduce()`.
+
+```
+class ForumReactor extends Reactor<ForumAction, ForumState, ForumMutation> {
+
+   mutate(action: ForumAction): Observable<ForumMutation> {
+	... // convert action stream to mutation stream. 
+   }
+   reduce(state: ForumState, mutation: ForumMutation) {
+        ... // reduce old state to new state.
+   }
+} 
+```
+
+**example of `mutate()` and `reduce()`**
+
+Using `Rxjs`'s `concat()` methods, you can serialize your stream. 
+```
+mutate(...){
+....
+case "CLICKPAGE":
+    return concat(
+	// 1. loading on
+	of<ForumMutation>({type:"SETLOADING", isLoading: true}),
+	// 2. fetching List
+	this.fetchList(this.currentState.topic, action.newPage).pipe(
+	    takeUntil(this.action.pipe(filter(value => value === action))),
+	    map<ListType[], ForumMutation>( res => {
+		return {type:"FETCHLIST", list: res, page: 1 } 
+	    })
+	),
+	// 3. Loading off
+	of<ForumMutation>({type:"SETLOADING", isLoading: false}),
+    }
+   ...
+```
+
+```
+reduce(...) {
+...
+    case "FETCHLIST":
+	newState.isLoading = false;
+	if (mutation.list.length === 0){
+	    newState.isError = true;
+	    return newState
+	} else {
+	    newState.list = mutation.list;
+	    newState.page = mutation.page;
+	    return newState
+	}
+ ....
+}
+```
+
+**Usage**
+```
+const reactor = new ForumReactor(initialState)
+...
+//dispatching action.
+reactor.dispatch({type:"CLICKPAGE"})
+
+//subscribe reaction from Reactor
+reactor.state.subscribe( res => console.log(res) )
+```
+
+
 
 ## 메소드
 
@@ -311,7 +435,7 @@ interface DECREASEACTION {
 export type ActionType = INCREASEACTION | DECREASEACTION
 ```
 `Redux`의 유틸 라이브러리를 활용해 조금더 쉽게 타입을 생성할 수 있습니다.
-[typesface-actions](https://github.com/piotrwitek/typesafe-actions)
+
 
 ### To-do list
 

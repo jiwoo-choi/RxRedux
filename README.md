@@ -24,7 +24,7 @@ Inspired by [ReactorKit](https://github.com/ReactorKit/ReactorKit)
 ## Installation
 
 ```
-npm i jsreactorkit
+npm i reactivex-redux
 ```
 
 ## Concept

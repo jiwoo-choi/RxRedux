@@ -21,7 +21,7 @@ Inspired by [ReactorKit](https://github.com/ReactorKit/ReactorKit)
   </a>
 </p>
 
-## installation
+## Installation
 
 ```
 npm i jsreactorkit
@@ -49,11 +49,9 @@ Action, Mutation , State에 대한 자세한 내용은 [ReactorKit](https://gith
 |---------------|----------|---------|
 | initialState  | true     | none    |
 | isStubEnabled | false    | false   |
-| isGlobal      | false    | false   |
 
 - initialState : state의 처음 상태입니다.
 - isStubEnabled : 테스팅용 Stub입니다. View와의 바인딩을 체크하기 위한 용도입니다.
--  isGlobal: 해당 리액터가 글로벌로 사용될경우, unsubscribe()를 방지하기위해 사용됩니다.
 
 ### Mutate & Reduce
 - mutate()는 action으로부터 state를 변경시킬 수 있는 로직을 작성하는 부분입니다.
@@ -119,41 +117,9 @@ reactor.disposeAll();
 # React-바인딩
 리액트의 컴포넌트와 바인딩 할 수 있는 HOC와 메소드도 지원합니다.
 
-## ReactiveView (HOC)
+## useReactor
 ```
-export default ReactiveView(Component);
-```
-사용하기위해서는 Component가 `ReactorView` 라는 인터페이스를 구현해야합니다.
-
-### ReactorView
-```
-ReactorView<P extends  Reactor<any,any,any>> {
-	bind(reactor:P):DisposeBag;
-	reactor?:P;
-}
-```
-`ReactiveView`는  Component의 `ComponentDidMount()`이후에 `bind()`라는 함수를 추가적으로 불러 바인딩을 완성시킵니다.
-
-### Bind
-bind 메소드는 `Component(View)`와 `Reactor`를 연결시켜주는 부분입니다. 
-
-### 예제
-```
-componentDidMount(){
- this.reactor = new AnyReactor({...})
-}
-
-bind(reactor: TableReactor): DisposeBag {
-
-	let  disposeBag = new  DisposeBag();
-	disposeBag.disposeOf = reactor.state.pipe(
-		map( res  =>  res.data ),
-		deepDistinctUntilChanged(),
-		).subscribe( data  => {
-		this.setState({data})
-	})
-return  disposeBag;
-}
+export default useReactor(Component);
 ```
 
 
@@ -167,75 +133,9 @@ const value = register([new ModalReactor({isOpened: false},false,true)])
 ```
 
 ### 2. Provider
-앱의 최상단에서 `GlobalReactor.Provider`로 감싸줍니다.
-```
-App.tsx //최상단
 
-const value = register([new ModalReactor({isOpened: false},false,true)])
 
-render(){
-    return (
-        <GlobalReactor.Provider value={value}>
-            ....
-            .....
-        </GlobalReactor.Provider>
-    )
-}
-```
-
-### 3. State 바꾸기 / 구독하기.
-
-### 3-1. Export using Wrapper.
-
-마찬가지로 전용 뷰 Wrapper인 `Global`이라는 함수를 지원합니다.
-
-`Global`에서는 Reactor의 이름으로 글로벌 리액터중에서 원하는 리액터를 선택해야합니다. 
-
-```
-export default Global(SomeView, ModalReactor.name)
-```
-
-### 3-2. "SomeView" 구현하기.
-
-위의 SomeView예시처럼 `Global(SomeView, ...)`에 내가 작업하던 뷰를 담으려면, 몇가지 규칙이 있습니다.
-
-1. 기존 관리하던 로컬 `State`와 차별점을 두기위해서 글로벌 상태는 `Props`로 받을 수 있습니다.
-
-2. 지금 작성하고 있는 뷰에서 받고싶은 `State`와 `Reactor`의 타입을 인터페이스 `GlobalReactorProps<T,K>` 를 통해 명시하고, Props로 받는다고 선언합니다.
-
-### 예제 - state받기
-```
-class TestViewGlobalGetState extends React.Component<GlobalReactorProps<ModalReactor,ModalState>>{
-    render(){
-        return(
-            <Button>
-                {this.props.globalState.isOpened? "OPENED" : "UNOPENED"}
-            </Button>
-        )
-    }
-}
-```
-### 예제 - state바꾸기
-```
-class TestViewGlobalChangeState extends React.Component<GlobalReactorProps<ModalReactor,ModalState>>{
-    
-    render(){
-        return(
-            <Button onClick={()=>{this.props.globalRactor.action.next({type:"MODALTOGGLE"})}}>
-                바꾸는버튼
-            </Button>
-        )
-    }
-}
-```
-
-### 예제 - export
-```
-export const GLOBALTEST = Global(TestViewGlobalGetState, ModalReactor.name)
-export const GLOBALTEST2 = Global(TestViewGlobalChangeState, ModalReactor.name)
-```
-
-# ReactorHook (beta)
+# ReactorHook (Experimental)
 Functional Component 에서 리액터를 사용할 수 있도록 나온 FC전용 리액터 입니다. Reactor와 기본방식은 같으나 상태관리에 사용할 수 있는 custom hook을 추가하였습니다.
 
 * 뷰와 별도의 바인딩 과정 없이, state의 변화가 감지되면 뷰가 업데이트됩니다.
@@ -403,7 +303,6 @@ it('9. View Binding Check', done  => {
 })
 ```
 
-
 ## 그 외 예제.
 
 ### Action & Mutation & State정의
@@ -424,8 +323,9 @@ interface DECREASEACTION {
 
 export type ActionType = INCREASEACTION | DECREASEACTION
 ```
-`Redux`의 유틸 라이브러리를 활용해 조금더 타입을 생성할 수 있습니다.
+`Redux`의 유틸 라이브러리를 활용해 조금더 쉽게 타입을 생성할 수 있습니다.
 [typesface-actions](https://github.com/piotrwitek/typesafe-actions)
+
 ### To-do list
 
 - [x] initial Commit
@@ -442,3 +342,5 @@ export type ActionType = INCREASEACTION | DECREASEACTION
 ### Dependency
 - Rxjs 
 
+### 업데이트 내역
+- 글로벌 스토어 삭제, HOC 바인딩 방식, ReactorGroup & Rxjsextension추가.

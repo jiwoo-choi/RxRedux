@@ -37,7 +37,7 @@ var ReactorGroup = /** @class */ (function (_super) {
     ReactorGroup.prototype.render = function () {
         var _this = this;
         return (React.createElement(React.Fragment, null, map(this.props.children, function (child, index, total) {
-            return React.cloneElement(child, __assign(__assign({}, child.props), { reactor: _this.props.reactor }));
+            return React.cloneElement(child, __assign(__assign({}, _this.props), child.props));
         })));
     };
     return ReactorGroup;

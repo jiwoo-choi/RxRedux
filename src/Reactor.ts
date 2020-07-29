@@ -4,7 +4,7 @@ import { Stub } from './';
 import { DisposeBag } from './';
 
 
-type ReactorControlType<Action, State> = { dispatcher: (action: Action) => (...args: any)=>void  , stateStream: Observable<State>, getState: ()=>State}
+export type ReactorControlType<Action, State> = { dispatcher: (action: Action) => (...args: any)=>void  , stateStream: Observable<State>, getState: ()=>State}
 export type ReactorControlProps<Action,State> = { reactor_control? : ReactorControlType<Action,State>}
 
 export default abstract class Reactor<Action = {}, State = {}, Mutation = Action> {

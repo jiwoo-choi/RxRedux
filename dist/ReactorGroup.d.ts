@@ -1,7 +1,5 @@
 import React from "react";
-export interface ReactorGroupProps<T = any> {
-    reactor?: T;
-}
-export default class ReactorGroup extends React.PureComponent<ReactorGroupProps> {
+import { ReactorControlProps } from "./";
+export default class ReactorGroup extends React.PureComponent<ReactorControlProps<any, any>> {
     render(): JSX.Element;
 }

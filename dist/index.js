@@ -1,5 +1,5 @@
 export { default as DisposeBag } from './DisposeBag';
-export { default as useReactor } from './useReactor';
+export { default as useReactor } from './withReactor';
 export { default as Reactor } from './Reactor';
 export { default as Stub } from './Stub';
 export { default as ReactorHook } from './ReactorHook';

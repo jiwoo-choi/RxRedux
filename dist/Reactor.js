@@ -1,3 +1,14 @@
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 import { Subject, empty, queueScheduler } from 'rxjs';
 import { flatMap, startWith, scan, catchError, shareReplay, tap, observeOn, takeUntil } from 'rxjs/operators';
 import { Stub } from './';
@@ -21,6 +32,10 @@ var Reactor = /** @class */ (function () {
             this._action = new Subject();
             this._state = this.createStream();
         }
+        this.dispatch = this.dispatch.bind(this);
+        this.dispatchFn = this.dispatchFn.bind(this);
+        this.getReactorControl = this.getReactorControl.bind(this);
+        this.getState = this.getState.bind(this);
     }
     Object.defineProperty(Reactor.prototype, "initialState", {
         get: function () {
@@ -50,6 +65,14 @@ var Reactor = /** @class */ (function () {
         enumerable: false,
         configurable: true
     });
+    Reactor.prototype.getReactorControl = function (transformState) {
+        if (transformState) {
+            return { dispatcher: this.dispatchFn, stateStream: transformState, getState: this.getState };
+        }
+        else {
+            return { dispatcher: this.dispatchFn, stateStream: this.state, getState: this.getState };
+        }
+    };
     Object.defineProperty(Reactor.prototype, "name", {
         get: function () {
             return this.constructor.name;
@@ -57,12 +80,19 @@ var Reactor = /** @class */ (function () {
         enumerable: false,
         configurable: true
     });
+    Reactor.prototype.getState = function () {
+        return this.currentState;
+    };
     Reactor.prototype.dispatch = function (action) {
         this.action.next(action);
     };
-    Reactor.prototype._dispatch = function (action) {
+    Reactor.prototype.dispatchFn = function (action) {
         var self = this;
         return function () {
+            var args = [];
+            for (var _i = 0; _i < arguments.length; _i++) {
+                args[_i] = arguments[_i];
+            }
             self.action.next(action);
         };
     };
@@ -110,7 +140,7 @@ var Reactor = /** @class */ (function () {
         }));
         var transformedMutation = this.transformMutation(mutation);
         var state = transformedMutation.pipe(scan(function (state, mutate) {
-            return _this.reduce(state, mutate);
+            return _this.reduce(__assign({}, state), mutate);
         }, this.initialState), catchError(function () {
             return empty();
         }), startWith(this.initialState));

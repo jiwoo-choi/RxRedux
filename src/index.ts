@@ -2,10 +2,11 @@ export {
     default as DisposeBag
 } from './DisposeBag'
 
-export { default as useReactor } from './withReactor'
+export { default as withReactor } from './withReactor'
 
 export { default as Reactor } from './Reactor'
-export type { ReactorControlProps } from './Reactor'
+
+export type { ReactorControlProps, ReactorControlType } from './Reactor'
 
 export {
     default as Stub

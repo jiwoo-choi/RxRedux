@@ -1,6 +1,6 @@
 {
   "name": "reactivex-redux",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Redux using Rxjs.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

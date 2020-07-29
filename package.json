@@ -3,7 +3,7 @@
   "version": "1.0.3",
   "description": "Redux using Rxjs.",
   "main": "dist/index.js",
-  "types" : "dist/index.d.ts",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc"
   },

@@ -1,5 +1,6 @@
 import { forOwn } from 'lodash';
 import { Subscription } from 'rxjs';
+
 // disposebag : https://github.com/RonasIT/dispose-bag
 
 export default class DisposeBag {
@@ -32,7 +33,7 @@ export default class DisposeBag {
       }
     } else {
       this.subscriptions.unsubscribe();
-      forOwn(this.namedSubscriptions, (subscription) => {
+      forOwn(this.namedSubscriptions, (subscription: Subscription) => {
         subscription.unsubscribe();
       });
     }

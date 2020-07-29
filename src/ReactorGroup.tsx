@@ -1,4 +1,6 @@
 import React from "react";
+import { ReactorControlProps } from "./";
+
 
 function map(children : React.ReactNode, func: (child : React.ReactElement, index?:number, total?: number)=>void) {
     let index = 0;
@@ -7,20 +9,16 @@ function map(children : React.ReactNode, func: (child : React.ReactElement, inde
     );
 }
 
-export interface ReactorGroupProps<T = any> {
-    reactor?: T
-}
-
-export default class ReactorGroup extends React.PureComponent<ReactorGroupProps>{
-
+export default class ReactorGroup extends React.PureComponent<ReactorControlProps<any,any>>{
+    
     render(){
         return(
             <>
                 {
                     map( this.props.children, (child, index, total) => {
                         return React.cloneElement( child , {
+                            ...this.props,
                             ...child.props,
-                            reactor:this.props.reactor,
                         })
                     })
                 }

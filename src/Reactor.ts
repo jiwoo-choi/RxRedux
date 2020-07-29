@@ -1,7 +1,11 @@
 import { Observable ,Subject, Scheduler, empty, queueScheduler, Subscription } from 'rxjs'
-import { flatMap, startWith, scan, catchError, shareReplay, tap,  observeOn, takeUntil, switchMap} from 'rxjs/operators'
+import { flatMap, startWith, scan, catchError, shareReplay, tap,  observeOn, takeUntil, switchMap, distinctUntilChanged} from 'rxjs/operators'
 import { Stub } from './';
 import { DisposeBag } from './';
+
+
+type ReactorControlType<Action, State> = { dispatcher: (action: Action) => (...args: any)=>void  , stateStream: Observable<State>, getState: ()=>State}
+export type ReactorControlProps<Action,State> = { reactor_control? : ReactorControlType<Action,State>}
 
 export default abstract class Reactor<Action = {}, State = {}, Mutation = Action> {
 
@@ -35,6 +39,15 @@ export default abstract class Reactor<Action = {}, State = {}, Mutation = Action
         return this._action;
     }
 
+
+    getReactorControl(transformState?: Observable<State>) : ReactorControlType<Action, State>{
+        if (transformState) {
+            return { dispatcher: this.dispatchFn, stateStream: transformState, getState:this.getState}
+        } else {
+            return { dispatcher: this.dispatchFn, stateStream: this.state, getState:this.getState}
+        }
+    }
+
     constructor(initialState : State, isStubEnabled : boolean = false){
         
         this._isStubEnabled = isStubEnabled;
@@ -49,9 +62,20 @@ export default abstract class Reactor<Action = {}, State = {}, Mutation = Action
             this._action = new Subject<Action>();
             this._state = this.createStream();
         }
+
+        this.dispatch = this.dispatch.bind(this);
+        this.dispatchFn = this.dispatchFn.bind(this);
+        this.getReactorControl = this.getReactorControl.bind(this);
+        this.getState = this.getState.bind(this);
+
     }
+
     get name(){
         return this.constructor.name
+    }
+
+    getState(){
+        return this.currentState;
     }
 
     abstract mutate(action : Action): Observable<Mutation>;
@@ -61,25 +85,24 @@ export default abstract class Reactor<Action = {}, State = {}, Mutation = Action
         this.action.next(action)
     }
 
-    public _dispatch(action : Action) {
+    public dispatchFn(action : Action): (...args: any)=>void {
         let self = this;
-        return function () {
+        return function (...args:any) {
             self.action.next(action)
         }
     }
 
     protected transformAction(action: Observable<Action>): Observable<Action> {
-        return action;
+        return action
     }
 
     protected transformMutation(mutation: Observable<Mutation>): Observable<Mutation> {
-        return mutation;
+        return mutation
     }
 
     protected transformState(state: Observable<State>): Observable<State> {
-        return state;
+        return state
     }
-
 
     disposeOperator(){
         return takeUntil(this.dummyAction)
@@ -120,7 +143,7 @@ export default abstract class Reactor<Action = {}, State = {}, Mutation = Action
 
         let state = transformedMutation.pipe(
             scan((state, mutate) => {
-                return this.reduce( state, mutate );
+                return this.reduce( {...state}, mutate );
             }, this.initialState),
             catchError( () => {
                 return empty()
@@ -128,15 +151,17 @@ export default abstract class Reactor<Action = {}, State = {}, Mutation = Action
             ,startWith(this.initialState), 
         )
 
+
         let transformedState : Observable<State> = this.transformState(state)
         .pipe(
             tap( (state) => {
                 this.currentState = state
             }),
-            shareReplay(1),
+            shareReplay(1), 
         )
 
         this.disposedBy = transformedState.subscribe();
+
         return transformedState;
     }
 

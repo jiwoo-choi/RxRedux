@@ -90,8 +90,7 @@ export const ForumStateInitialState : ForumState = {
 }
 ```
 
-If you know a better way to create types, go for it.
-
+If you know a better way for typing, go for it.
 you could check out Redux's action generator library. [typesface-actions](https://github.com/piotrwitek/typesafe-actions)
 
 
@@ -173,7 +172,7 @@ reactor.state.subscribe( res => console.log(res) )
 
 ### mutate() and reduce()
 
-`mutate()` receives dispatched action, and generates an `Observable<Mutation>`
+`mutate()` receives a dispatched action, and generates an `Observable<Mutation>`
 
 `reduce()` reduces old states with `Mutation` to new states.
 
@@ -207,10 +206,9 @@ As of 1.0.4, RxRedux provides higher order component called `withReactor()`
 
 This HOC automatically subscribes reactor's from parents component.
 
-- parentFilterMapper : You don't have to subscribe all of the property in state objects. you can specify keys you want to subscribe as mapper function.
-- transfromStateStreamFromThisComponent : If this is true, the mapper function will automatically apply to child component.
-- skipSync : reactor emits current states when you start subscribing using `shareReplay()` operator in `rxjs`. You can ignore this call avoid redundant re-rendering. 
-
+- parentFilterMapper : You don't have to subscribe all of the properties in state object. you can specify keys you want to subscribe as a mapper function.
+- transfromStateStreamFromThisComponent : If this is true, the mapper function will automatically be applied to child component which is wrapped by `withReactor()`
+- skipSync : A reactor emits a current state when you start subscribing (i.e. when `withReactor(Component)` is mounted). You can ignore this call to avoid redundant re-rendering. 
 
 ## (Auomatic) Testing
 
@@ -283,10 +281,10 @@ Component<->Reactor testing can be tested with `Stub`
 
 ### What is Stub?
 
-Stub is a testing utilities implemented in Reactor.
-Stub can log every actions you've dispatched from Component and force state change.
+Stub is a testing utility implemented in `Reactor`.
+Stub can log every actions you've dispatched from Component, and it can force state changes.
 
-To enable Stub, you need to set `isStubEnbabled` as `true` in constuctor arguments.
+To enable `Stub`, you need to set `isStubEnbabled` as `true` in constuctor arguments.
 ```
 const reactor = new ForumReactor(initialState, true)
 ```
@@ -380,7 +378,7 @@ This injects Reactor its child.
 ### Dependency
 - Rxjs 
 - lodash
-- react (binding)
+- react
 
 ### 업데이트 내역
 - 1.0.4 : withReactor update.

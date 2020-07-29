@@ -3,7 +3,7 @@
 
 Inspired by [ReactorKit](https://github.com/ReactorKit/ReactorKit)
 
-RxRedux is a framework for React Web Application to seperate view model from view logic to make entire codes more testable.
+RxRedux is a framework for React Web Application to seperate view model from view to make entire codes more testable using Rxjs.
 
 Most of concepts of this project are identical to [ReactorKit](https://github.com/ReactorKit/ReactorKit), You can check the detailed explanation of specific concepts of this framework in its [repository](https://github.com/ReactorKit/ReactorKit). 
 
@@ -18,17 +18,17 @@ Reactor is "UI-independent" View-Model layer which manages the state of a view.
 ### Main Concepts
 
 - Action : Abstraction of the user interaction.
-- Mutation : The stage or process which can mutate the app's state.
+- Mutation : The stage which can mutate the app's state.
 - State : Abstraction of view's state.
 
 View -> Dispatching Action -> **[Action -> Mutation -> State]** -> new state -> View Update.
 
 ### How Reactor works with React-Components.
 
-1. An Element in the component (like a button) dispatches the action.
+1. An element in the component (like a button) dispatches the action.
 2. Reactor's `Action` receives the action.
 3. Reactor convert this stream to `Mutation` stream through `mutate()` method.
-4. Reactor's `Mutation` stage mutates the states (side effecct happens in this stage).
+4. Reactor's `Mutation` stage mutates the states (side effecct happens in this step).
 5. This will call `reduce()` methods to reduce old state to new state.
 6. new states will be updated in the view component whcih subscribes the Reactor.
 
@@ -196,11 +196,21 @@ RxRedux provides a way to bind your Reactor with React-Component.
 
 ### withReactor(component)
 
-This Higher Order Component iterates your component's props and instance members to check if there is a reactor to bind with.
+As of 1.0.4, RxRedux provides higher order component called `withReactor()`
 
-Then, This will automatically binds your Component with the Reactor. Therefore, it will update your component everytime reactor emits new states. Also, This will unsubscribe reactor when component unmounted.
+| parameter     | required | default |
+|---------------|----------|---------|
+| Component  | true     | none    |
+| parentFilterMapper | false    | false   |
+| transfromStateStreamFromThisComponent | false    | true   |
+| skipSync | false    | true   |
 
-To avoid redundant re-rendering request, there's a little throttle for every state update.
+This HOC automatically subscribes reactor's from parents component.
+
+- parentFilterMapper : You don't have to subscribe all of the property in state objects. you can specify keys you want to subscribe as mapper function.
+- transfromStateStreamFromThisComponent : If this is true, the mapper function will automatically apply to child component.
+- skipSync : reactor emits current states when you start subscribing using `shareReplay()` operator in `rxjs`. You can ignore this call avoid redundant re-rendering. 
+
 
 ## (Auomatic) Testing
 
@@ -373,5 +383,7 @@ This injects Reactor its child.
 - react (binding)
 
 ### 업데이트 내역
+- 1.0.4 : withReactor update.
+- 1.0.4 : bug-fix : state is undeliberately mutated.
 - Readme update.
 - 글로벌 스토어 삭제, HOC 바인딩 방식, ReactorGroup & Rxjsextension추가.
